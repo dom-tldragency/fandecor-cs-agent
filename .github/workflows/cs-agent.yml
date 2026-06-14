@@ -1,0 +1,37 @@
+name: Fan Decor CS Agent
+
+# Always-on cloud runtime. Runs server-side on GitHub's infra — independent of any laptop.
+# GitHub cron is UTC. This window (05:00–19:00 UTC, every 30 min) safely covers 07:00–19:00
+# Europe/London across BST and GMT; runtime/main.py enforces the exact London 07:00–19:00 window.
+on:
+  schedule:
+    - cron: "*/30 5-19 * * *"
+  workflow_dispatch: {}        # allow manual runs / testing
+
+concurrency:
+  group: cs-agent
+  cancel-in-progress: false    # never overlap cycles
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r runtime/requirements.txt
+      - name: Run one CS cycle
+        env:
+          ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
+          SHOPIFY_ADMIN_TOKEN:      ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SLACK_BOT_TOKEN:          ${{ secrets.SLACK_BOT_TOKEN }}
+          CLICKUP_TOKEN:            ${{ secrets.CLICKUP_TOKEN }}
+          TIKTOK_APP_KEY:           ${{ secrets.TIKTOK_APP_KEY }}
+          TIKTOK_APP_SECRET:        ${{ secrets.TIKTOK_APP_SECRET }}
+          TIKTOK_ACCESS_TOKEN:      ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_REFRESH_TOKEN:     ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          TIKTOK_SHOP_CIPHER:       ${{ secrets.TIKTOK_SHOP_CIPHER }}
+          GMAIL_SERVICE_ACCOUNT_JSON: ${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}
+        run: python -m runtime.main

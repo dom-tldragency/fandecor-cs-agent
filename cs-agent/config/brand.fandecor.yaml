@@ -1,0 +1,104 @@
+# =============================================================================
+# BRAND CONFIG — Fan Decor
+# Everything marked CONFIRM: is a PLACEHOLDER. The agent will NOT quote a value
+# whose `confirmed` flag is false — it downgrades that reply to a human draft.
+# To go live on a category, fill the value and set its confirmed flag to true.
+# To launch another brand, copy this file to brand.<newbrand>.yaml and refill.
+# =============================================================================
+
+brand:
+  name: Fan Decor
+  domain: fandecor.com
+  store_email: marketing@fandecor.com          # Shopify store contact address
+  customer_service_email: customerservice@fandecor.com   # published CS inbox (returns/damaged/delivery) — likely the mailbox to connect
+  phone: "07495601226"
+  address: "40 Dalmeny Rd, Southbourne, BH6 4BW, United Kingdom"
+  currency: GBP
+  country: United Kingdom
+  timezone: Europe/London
+  market: Football merch DTC (Shopify + TikTok Shop)
+
+# -----------------------------------------------------------------------------
+# BRAND VOICE  — CONFIRM with James / Fin
+# -----------------------------------------------------------------------------
+voice:
+  confirmed: true                  # Dom signed off 2026-06-14
+  summary: "Friendly, warm, football-fan tone. Talk like a fellow fan, not a corporate desk."
+  do:
+    - "Warm, upbeat, human. Use the customer's first name."
+    - "Be concrete: give the actual order status / tracking, not vague reassurance."
+    - "Own problems quickly and apologise once, sincerely, then fix it."
+  dont:
+    - "No corporate stiffness, no 'we regret to inform you'."
+    - "Never argue or get defensive. Never blame the customer."
+    - "No emojis overload — light touch only."          # CONFIRM emoji policy
+  sign_off: "CONFIRM: e.g. 'Cheers, the Fan Decor team' / agent name?"
+
+# -----------------------------------------------------------------------------
+# POLICIES  — all PLACEHOLDERS until confirmed
+# -----------------------------------------------------------------------------
+# Values below sourced from published policies at fandecor.com on 2026-06-14
+# (Shopify shopPolicies + /policies pages). These are live, binding policies, so
+# confirmed: true. Dom: sanity-check the ones flagged ⚠️ in the handover notes.
+policies:
+  shipping_uk:
+    confirmed: true
+    value: "FREE standard, arrives within 3–5 working days. Express £6.99 next-day if ordered before 2pm on a working day."
+    wall_art: "Wall art: 7–10 days, made to order. Next-day NOT available on wall art."
+    carrier: "CONFIRM: carrier name not published (tracking sent by email on dispatch)"
+  shipping_intl:
+    confirmed: true
+    value: "UK only at present. 'We currently deliver to addresses within the United Kingdom.' No international shipping yet."
+  returns:
+    confirmed: true
+    window_days: 365
+    conditions: "Unused and in original packaging. Once opened/used, change-of-mind returns can't be accepted. Wall art is non-returnable (made to order)."
+    return_postage: "Customer pays return postage on change-of-mind returns. For damaged/faulty, Fan Decor covers return cost in full."
+    process: "Customer emails customerservice@fandecor.com with order number + reason."
+  refunds:
+    confirmed: true
+    policy: "Once the return is received and checked, refund processed within 14 days."
+    method: "Refund to the original payment method / channel used — i.e. refunded via TikTok Shop if bought on TikTok, via Shopify if bought on the website."
+  damaged_wrong_missing:
+    confirmed: true
+    process: "Email customerservice@fandecor.com within 365 days with order number + photos. Applies even if the product has been opened. Fan Decor covers return cost and sorts a replacement/refund."
+    photo_required: true
+    note: "Replacement orders are raised in Tarlu — see playbook/sops/tarlu-raise-order.md. The replacement/refund DECISION is still a gated money action (human-approved)."
+  cancellation:
+    confirmed: false
+    window: "CONFIRM: not published. How long after ordering can a customer cancel (before dispatch)?"
+  sizing:
+    confirmed: false
+    guidance: "CONFIRM: not in policies. Use the size guide on each product page? Provide a fit rule of thumb (true to size / size up)?"
+  preorder_restock:
+    confirmed: false
+    handling: "CONFIRM: not published. How are pre-orders / restocks communicated?"
+
+# -----------------------------------------------------------------------------
+# GUARDRAIL SETTINGS  — CONFIRM the cap and approver
+# -----------------------------------------------------------------------------
+guardrails:
+  refund_cap_gbp:
+    confirmed: true
+    value: 35    # "for now" — max £ the agent could auto-process at Phase 3. Above £35 is NEVER auto. (Currently all refunds gated anyway — mode=send_non_money.)
+  named_approver:
+    confirmed: true
+    value: "Jamie Sharp (Agency MD)"
+    email: jamie@tl-dr.agency
+    slack_id: U08LQRCFXG8
+    clickup_id: "81771384"
+  large_order_threshold_gbp:
+    confirmed: false
+    value: "CONFIRM: £ above which an order auto-escalates as 'large'"
+
+# -----------------------------------------------------------------------------
+# ESCALATION ROUTING (Slack)
+# -----------------------------------------------------------------------------
+escalation:
+  slack_channel: "#fan-decor-cs-agent"
+  immediate_ping_triggers:
+    - angry / complaint / threatening tone
+    - legal threat
+    - chargeback / payment dispute
+    - influencer or large order
+    - anything outside confirmed policy

@@ -1,0 +1,54 @@
+# =============================================================================
+# AUTONOMY CONFIG
+# Controls what the agent may SEND vs DRAFT vs ESCALATE vs treat as GATED money.
+# =============================================================================
+
+# Current operating mode. Set by Dom on 2026-06-14.
+#   draft_only      = Phase 1: draft everything, send nothing.
+#   send_non_money  = auto-send everything that (a) isn't a money action and
+#                     (b) doesn't quote an unconfirmed policy value. CURRENT.
+#   full_phase3     = also auto-process refunds/returns under the cap.
+mode: send_non_money
+
+# HARD, MODE-INDEPENDENT RULES (never overridden by mode):
+hard_rules:
+  - "Money actions (refund / payment / store credit) are ALWAYS gated below full_phase3, and any amount above refund_cap_gbp is NEVER auto, in any mode."
+  - "A reply may auto-send ONLY if every policy value it quotes has confirmed: true in the brand config. Otherwise downgrade to draft."
+  - "complaint_escalation is NEVER auto-sent — always escalate."
+  - "Suspected fraud / chargeback → flag + escalate, never act."
+
+# Per-category action under the CURRENT mode (send_non_money).
+# Effective action = the value below, then downgraded if it would quote an
+# unconfirmed policy (-> draft) or involves money (-> gated).
+categories:
+  wismo:
+    action: auto_send            # factual order status + tracking; no policy quoted
+    notes: "Pure Shopify read. Safest, highest volume."
+  delivery_issue:
+    action: auto_send            # status/tracking chase; escalate if customer wants refund/redelivery promise
+    notes: "If resolution requires a refund or a delivery-date promise -> gated/escalate."
+  sizing_product:
+    action: auto_send            # downgraded to draft until policies.sizing.confirmed
+    notes: "Quotes sizing guidance -> needs sizing confirmed, else draft."
+  order_change_cancel:
+    action: auto_send            # confirmation only; if it triggers a refund -> gated
+    notes: "Needs policies.cancellation.confirmed. Refund-on-cancel is gated money."
+  returns_exchange:
+    action: auto_send            # downgraded to draft until policies.returns.confirmed
+    notes: "Quotes returns window/conditions -> needs returns confirmed, else draft."
+  refund_request:
+    action: gated                # MONEY — always human-approved
+    notes: "Recommend + draft + route for approval. Never auto below full_phase3."
+  damaged_wrong_missing:
+    action: gated                # involves replacement (Tarlu) and/or refund
+    notes: "Needs Tarlu SOP + often a refund/replacement decision -> human."
+  complaint_escalation:
+    action: escalate             # immediate Slack ping, never auto-reply
+    notes: "De-escalate only in a human-approved draft."
+  spam:
+    action: close                # close, no reply, log only
+
+# Trust signal that justifies moving the whole mode forward (brief §7).
+phase_gate:
+  metric: approval_edit_rate     # how often humans change the drafts
+  rule: "Advance a category to auto_send / full_phase3 only when its edit rate is consistently low (target: define with Dom)."

@@ -1,0 +1,47 @@
+# =============================================================================
+# CHANNELS CONFIG — which inbound channels are live vs stubbed.
+# Each maps to an adapter in adapters/. All expose the same interface so the
+# core pipeline is unchanged regardless of which are on.
+# =============================================================================
+
+channels:
+  email:
+    adapter: adapters/email.md
+    status: stubbed              # flip to "live" once the FD mailbox is connected
+    connected_account: dom@tl-dr.agency        # WRONG account for CS — see below
+    target_account: customerservice@fandecor.com   # published CS inbox (returns/damaged/delivery). marketing@fandecor.com is the Shopify store address — confirm which receives customer CS mail.
+    blocker: "FD customer-service mailbox not yet connected as a Google account."
+    poll: unread threads in inbox addressed to / about Fan Decor orders
+
+  shopify_inbox:
+    adapter: adapters/shopify-inbox.md
+    status: stubbed
+    blocker: "Shopify Inbox / storefront chat + contact form not yet wired."
+
+  tiktok_seller:
+    adapter: adapters/tiktok-seller.md
+    status: stubbed
+    blocker: "TikTok Shop Seller/Partner API not connected. The connected TikTok tool is affiliate/creator-only, NOT seller CS/refunds."
+
+  meta_ig:
+    adapter: adapters/meta-ig.md
+    status: stubbed
+    blocker: "Meta Graph API (Instagram + Messenger DMs) not connected."
+
+# Backing systems the live channels use:
+backends:
+  shopify:
+    status: live
+    use_for: order + customer + fulfilment + refund lookups (all channels)
+  clickup:
+    status: live
+    use_for: audit log + escalation queue
+    list_id: "901615395458"        # "CS Agent — Log & Escalations" under FAN DECOR folder
+    list_url: https://app.clickup.com/9016863012/v/l/li/901615395458
+    returns_list_id: "901615395484"   # "Returns & Refunds Register" — return lifecycle (see playbook/sops/returns-lifecycle.md)
+    returns_list_url: https://app.clickup.com/9016863012/v/l/li/901615395484
+  slack:
+    status: live
+    channel: "#fan-decor-cs-agent"
+    channel_id: "C0BAD4YQ80M"
+    use_for: approvals, escalations, daily brief
