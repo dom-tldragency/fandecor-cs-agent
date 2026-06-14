@@ -8,7 +8,13 @@ on:
   # the two lines below (see DEPLOY.md §4). Manual runs via workflow_dispatch only for now.
   # schedule:
   #   - cron: "*/30 5-19 * * *"
-  workflow_dispatch: {}        # allow manual runs / testing
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true = draft/print only, NO sends (safe test). false = allow real sends."
+        type: choice
+        options: ["true", "false"]
+        default: "true"        # allow manual runs / testing
 
 concurrency:
   group: cs-agent
@@ -26,6 +32,7 @@ jobs:
       - run: pip install -r runtime/requirements.txt
       - name: Run one CS cycle
         env:
+          DRY_RUN:                  ${{ inputs.dry_run || vars.DRY_RUN || 'true' }}
           ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
           SHOPIFY_ADMIN_TOKEN:      ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SLACK_BOT_TOKEN:          ${{ secrets.SLACK_BOT_TOKEN }}

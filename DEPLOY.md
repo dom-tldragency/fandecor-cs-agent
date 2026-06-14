@@ -20,18 +20,23 @@ gh repo create dom-tldragency/fandecor-cs-agent --private --source . --remote or
 ```
 
 ## 2. Set the secrets (NEVER commit these)
-```bash
-gh secret set ANTHROPIC_API_KEY            --repo dom-tldragency/fandecor-cs-agent
-gh secret set SHOPIFY_ADMIN_TOKEN          --repo dom-tldragency/fandecor-cs-agent
-gh secret set SLACK_BOT_TOKEN              --repo dom-tldragency/fandecor-cs-agent
-gh secret set CLICKUP_TOKEN                --repo dom-tldragency/fandecor-cs-agent
-gh secret set TIKTOK_APP_KEY               --repo dom-tldragency/fandecor-cs-agent   # 6kam07mo727sq
-gh secret set TIKTOK_APP_SECRET            --repo dom-tldragency/fandecor-cs-agent   # rotate this — it was shared in chat
-gh secret set TIKTOK_ACCESS_TOKEN          --repo dom-tldragency/fandecor-cs-agent   # after shop auth
-gh secret set TIKTOK_REFRESH_TOKEN         --repo dom-tldragency/fandecor-cs-agent
-gh secret set TIKTOK_SHOP_CIPHER           --repo dom-tldragency/fandecor-cs-agent
-gh secret set GMAIL_SERVICE_ACCOUNT_JSON   --repo dom-tldragency/fandecor-cs-agent   # base64 of the JSON
-```
+`gh` is **not installed** on the build machine, so add these via the repo's
+**Settings → Secrets and variables → Actions → New repository secret**. Add the value directly in the UI —
+don't route secrets through chat/logs.
+
+| Secret | Where to get it | Notes |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | the agent's brain (triage + drafting) |
+| `SHOPIFY_ADMIN_TOKEN` | FD Shopify admin → Settings → Apps → **Develop apps** → create custom app → Admin API token | scopes: `read_orders`, `read_customers` (add `read_fulfillments`; refund write later) |
+| `SLACK_BOT_TOKEN` | the Slack app (`cs-agent/setup/slack-bot-setup.md`) | `xoxb-…`, scope `chat:write` |
+| `CLICKUP_TOKEN` | ClickUp → Settings → Apps → API Token | `pk_…` |
+| `TIKTOK_APP_KEY` | TikTok Partner Center app | `6kam07mo727sq` (not sensitive) |
+| `TIKTOK_APP_SECRET` | TikTok Partner Center app | 🔐 **rotate first** — was shared in chat |
+| `TIKTOK_ACCESS_TOKEN` / `TIKTOK_REFRESH_TOKEN` / `TIKTOK_SHOP_CIPHER` | after app approval + shop auth | minted by us from the auth_code |
+| `GMAIL_SERVICE_ACCOUNT_JSON` | the service-account key, **base64-encoded** | ✅ done. `base64 -i key.json \| pbcopy` |
+| `META_PAGE_ACCESS_TOKEN` / `META_IG_ID` / `META_PAGE_ID` | after Meta app review | for IG + Messenger |
+
+**Optional repo *variable* (not a secret):** `DRY_RUN` — leave unset/`true` to keep drafting-only; set `false` only when going live.
 
 ## 3. Verify safely (still not live)
 - The GitHub workflow runs with `DRY_RUN` defaulting to **true** — every "send" is printed, nothing goes
