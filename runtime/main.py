@@ -125,7 +125,8 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
         return {"skipped": "out_of_hours"}
 
     shop, slack, cu = Shopify(), Slack(), ClickUp()
-    summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0, "closed": 0, "stubbed": []}
+    summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0,
+               "closed": 0, "errors": 0, "stubbed": []}
 
     for adapter in build_adapters(cfg):
         if not adapter.live:
@@ -133,7 +134,12 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
             continue
         for msg in adapter.fetch_new():
             summary["seen"] += 1
-            res = handle_message(cfg, adapter, shop, slack, cu, msg, dry)
+            try:
+                res = handle_message(cfg, adapter, shop, slack, cu, msg, dry)
+            except Exception as e:               # one bad message must not kill the cycle
+                summary["errors"] += 1
+                print(f"  ! error handling message {msg.get('id')}: {e}")
+                continue
             key = {"auto_send": "auto_sent", "escalate": "escalated", "close": "closed"} \
                 .get(res["action"], "drafted")
             summary[key] += 1
