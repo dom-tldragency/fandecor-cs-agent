@@ -28,7 +28,7 @@ channels:
   meta_ig:
     adapter: adapters/meta-ig.md
     status: stubbed
-    access: Meta Graph API (poll conversations). Setup: cs-agent/setup/meta-graph-api-access.md
+    access: "Meta Graph API (poll conversations). Setup in cs-agent/setup/meta-graph-api-access.md"
     blocker: "Meta app + pages_messaging/instagram_manage_messages permissions (app review) not yet done."
 
 # Backing systems the live channels use:
