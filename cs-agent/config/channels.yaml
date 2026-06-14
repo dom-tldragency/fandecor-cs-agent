@@ -7,10 +7,12 @@
 channels:
   email:
     adapter: adapters/email.md
-    status: stubbed              # flip to "live" once the FD mailbox is connected
-    connected_account: dom@tl-dr.agency        # WRONG account for CS — see below
-    target_account: customerservice@fandecor.com   # published CS inbox (returns/damaged/delivery). marketing@fandecor.com is the Shopify store address — confirm which receives customer CS mail.
-    blocker: "FD customer-service mailbox not yet connected as a Google account."
+    status: stubbed              # SA + GMAIL_SERVICE_ACCOUNT_JSON secret are DONE; flip to "live" to activate
+    access: Gmail API via Google service account (domain-wide delegation, gmail.modify + gmail.send)
+    mailboxes:                   # BOTH inboxes customers use; the service account impersonates each
+      - customerservice@fandecor.com
+      - marketing@fandecor.com
+    note: "Closest channel to go-live (TikTok still in app review). To activate: set status->live, then a DRY_RUN workflow_dispatch to confirm reads/drafts before any real send."
     poll: unread threads in inbox addressed to / about Fan Decor orders
 
   shopify_inbox:

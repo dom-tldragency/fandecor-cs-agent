@@ -32,16 +32,25 @@ def within_business_hours() -> bool:
 
 # ----- build the channel adapters from config + env --------------------------
 def build_adapters(cfg: Config) -> List[ChannelAdapter]:
+    """Create adapters. A channel is ACTIVE only if channels.yaml marks it `status: live`
+    (the config gate) AND its credentials are present (the adapter's own .live check). Either
+    missing => a stub, so NOTHING runs against a channel until it is explicitly turned on.
+    """
     adapters: List[ChannelAdapter] = []
     declared = cfg.channels.get("channels", {})
-    for name in declared:
+    for name, ch in declared.items():
+        if ch.get("status") != "live":
+            adapters.append(StubAdapter(name, ch.get("blocker", "")))
+            continue
         if name == "tiktok_seller":
-            a: ChannelAdapter = TikTokSeller()
+            adapters.append(TikTokSeller())
         elif name == "email":
-            a = GmailChannel()
+            mailboxes = ch.get("mailboxes") or [
+                "customerservice@fandecor.com", "marketing@fandecor.com"]
+            for mb in mailboxes:                      # one adapter per mailbox
+                adapters.append(GmailChannel(mb))
         else:
-            a = StubAdapter(name, declared[name].get("blocker", ""))
-        adapters.append(a)
+            adapters.append(StubAdapter(name, ch.get("blocker", "")))
     return adapters
 
 
