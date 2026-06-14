@@ -15,7 +15,7 @@ API_VERSION = "2024-10"
 
 class Shopify:
     def __init__(self) -> None:
-        self.store = os.environ.get("SHOPIFY_STORE", "fandecor.myshopify.com")
+        self.store = os.environ.get("SHOPIFY_STORE", "fan-decor-1.myshopify.com")
         self.token = os.environ.get("SHOPIFY_ADMIN_TOKEN", "")
         self.base = f"https://{self.store}/admin/api/{API_VERSION}/graphql.json"
 
