@@ -25,9 +25,19 @@ class GmailChannel(ChannelAdapter):
 
     def __init__(self, mailbox: str = "customerservice@fandecor.com") -> None:
         self.mailbox = mailbox
-        raw = os.environ.get("GMAIL_SERVICE_ACCOUNT_JSON", "")
-        self._sa: Optional[Dict[str, Any]] = json.loads(base64.b64decode(raw)) if raw else None
+        self._sa: Optional[Dict[str, Any]] = self._load_sa(
+            os.environ.get("GMAIL_SERVICE_ACCOUNT_JSON", "").strip())
         self.live = self._sa is not None
+
+    @staticmethod
+    def _load_sa(raw: str) -> Optional[Dict[str, Any]]:
+        """Accept the service-account key as raw JSON OR base64-encoded JSON."""
+        if not raw:
+            return None
+        try:
+            return json.loads(raw)                      # raw JSON pasted directly
+        except json.JSONDecodeError:
+            return json.loads(base64.b64decode(raw))    # base64-encoded JSON
 
     def _service(self):
         # Lazy: only import google libs when actually connecting.
