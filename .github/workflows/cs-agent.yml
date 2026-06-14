@@ -35,6 +35,7 @@ jobs:
           DRY_RUN:                  ${{ inputs.dry_run || vars.DRY_RUN || 'true' }}
           ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
           SHOPIFY_ADMIN_TOKEN:      ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SLACK_WEBHOOK_URL:        ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_BOT_TOKEN:          ${{ secrets.SLACK_BOT_TOKEN }}
           CLICKUP_TOKEN:            ${{ secrets.CLICKUP_TOKEN }}
           TIKTOK_APP_KEY:           ${{ secrets.TIKTOK_APP_KEY }}

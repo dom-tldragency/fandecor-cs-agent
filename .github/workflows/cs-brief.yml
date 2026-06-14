@@ -20,6 +20,7 @@ jobs:
       - run: pip install -r runtime/requirements.txt
       - name: Post daily brief
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          CLICKUP_TOKEN:   ${{ secrets.CLICKUP_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN:   ${{ secrets.SLACK_BOT_TOKEN }}
+          CLICKUP_TOKEN:     ${{ secrets.CLICKUP_TOKEN }}
         run: python -m runtime.brief
