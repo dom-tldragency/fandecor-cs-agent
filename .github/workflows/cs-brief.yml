@@ -1,0 +1,24 @@
+name: Fan Decor CS Daily Brief
+
+# 08:00 Europe/London. GitHub cron is UTC; 07:00 UTC = 08:00 BST (summer). The brief is approximate,
+# so a one-hour DST drift in winter is acceptable; tighten later if needed.
+on:
+  schedule:
+    - cron: "3 7 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r runtime/requirements.txt
+      - name: Post daily brief
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          CLICKUP_TOKEN:   ${{ secrets.CLICKUP_TOKEN }}
+        run: python -m runtime.brief
