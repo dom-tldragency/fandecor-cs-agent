@@ -16,6 +16,7 @@ from .adapters.base import ChannelAdapter, StubAdapter, Message
 from .adapters.shopify import Shopify
 from .adapters.tiktok_seller import TikTokSeller
 from .adapters.email_gmail import GmailChannel
+from .adapters.meta_ig import MetaIG
 from .notify.slack import Slack
 from .notify.clickup import ClickUp
 
@@ -49,6 +50,8 @@ def build_adapters(cfg: Config) -> List[ChannelAdapter]:
                 "customerservice@fandecor.com", "marketing@fandecor.com"]
             for mb in mailboxes:                      # one adapter per mailbox
                 adapters.append(GmailChannel(mb))
+        elif name == "meta_ig":
+            adapters.append(MetaIG())
         else:
             adapters.append(StubAdapter(name, ch.get("blocker", "")))
     return adapters
