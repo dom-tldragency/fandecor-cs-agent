@@ -19,7 +19,10 @@ TRIAGE_CATEGORIES = [
     "complaint_escalation", "spam",
 ]
 
-MODEL = os.environ.get("CS_MODEL", "claude-opus-4-8")
+# Cost/quality split: Haiku triages (cheap, simple classification at volume),
+# Sonnet drafts (better brand voice where it's customer-facing). Opus is overkill here.
+TRIAGE_MODEL = os.environ.get("CS_TRIAGE_MODEL", "claude-haiku-4-5-20251001")
+DRAFT_MODEL = os.environ.get("CS_DRAFT_MODEL", "claude-sonnet-4-6")
 
 
 def _client():
@@ -43,7 +46,7 @@ def triage(cfg: Config, message: Dict[str, Any]) -> Dict[str, Any]:
         '"sentiment": "positive|neutral|negative|angry", "urgency": "...", "summary": "..."}'
     )
     resp = _client().messages.create(
-        model=MODEL, max_tokens=400, system=system,
+        model=TRIAGE_MODEL, max_tokens=300, system=system,
         messages=[{"role": "user", "content": user}],
     )
     return _parse_json(resp.content[0].text)
@@ -71,7 +74,7 @@ def draft_reply(cfg: Config, message: Dict[str, Any], category: str,
         "Write the reply body only (no subject, no preamble)."
     )
     resp = _client().messages.create(
-        model=MODEL, max_tokens=700, system=system,
+        model=DRAFT_MODEL, max_tokens=600, system=system,
         messages=[{"role": "user", "content": user}],
     )
     return resp.content[0].text.strip()
