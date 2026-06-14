@@ -4,8 +4,10 @@ name: Fan Decor CS Agent
 # GitHub cron is UTC. This window (05:00–19:00 UTC, every 30 min) safely covers 07:00–19:00
 # Europe/London across BST and GMT; runtime/main.py enforces the exact London 07:00–19:00 window.
 on:
-  schedule:
-    - cron: "*/30 5-19 * * *"
+  # SCHEDULE DISABLED until go-live (keeps everything non-live). To activate: uncomment
+  # the two lines below (see DEPLOY.md §4). Manual runs via workflow_dispatch only for now.
+  # schedule:
+  #   - cron: "*/30 5-19 * * *"
   workflow_dispatch: {}        # allow manual runs / testing
 
 concurrency:

@@ -39,10 +39,12 @@ gh secret set GMAIL_SERVICE_ACCOUNT_JSON   --repo dom-tldragency/fandecor-cs-age
 - Flip a channel to `status: live` in `cs-agent/config/channels.yaml` only once its credentials are set.
 
 ## 4. Go live (per channel, when trust is earned)
-1. Set the channel `status: live`.
-2. Run a `workflow_dispatch` with `DRY_RUN=true` and confirm the drafts look right.
-3. Set repo variable `DRY_RUN=false` to allow real sends (money stays gated regardless).
-4. Watch the daily brief + approval-edit rate; advance autonomy per `cs-agent/config/autonomy.yaml`.
+1. Set the channel `status: live` in `cs-agent/config/channels.yaml`.
+2. **Enable the cron:** uncomment the `schedule:` blocks in `.github/workflows/cs-agent.yml` and
+   `cs-brief.yml` (they're commented out so nothing auto-runs until you choose to). Push.
+3. Run a `workflow_dispatch` with `DRY_RUN=true` and confirm the drafts look right.
+4. Set repo variable `DRY_RUN=false` to allow real sends (money stays gated regardless).
+5. Watch the daily brief + approval-edit rate; advance autonomy per `cs-agent/config/autonomy.yaml`.
 
 ## Rollback
 Set `DRY_RUN=true` (or disable the workflow) — instantly stops all outbound actions.
