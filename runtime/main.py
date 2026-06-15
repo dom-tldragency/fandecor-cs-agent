@@ -145,7 +145,7 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
         print(f"  ! reconcile error: {e}")
 
     summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0,
-               "closed": 0, "errors": 0, "stubbed": []}
+               "closed": 0, "errors": 0, "skipped_noise": 0, "stubbed": []}
 
     max_messages = int(os.environ.get("CS_MAX_MESSAGES", "15"))   # bound per-cycle cost
     for adapter in build_adapters(cfg):
@@ -153,6 +153,18 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
             summary["stubbed"].append(adapter.name)
             continue
         for msg in adapter.fetch_new():
+            # Cheap relevance gate — skip newsletters / order notifications / supplier / automated
+            # noise before spending triage+draft tokens (esp. the marketing@ inbox).
+            from . import llm
+            try:
+                relevant = llm.is_customer_message(cfg, msg)
+            except Exception:
+                relevant = True   # if the gate errors, don't silently drop a possible real message
+            if not relevant:
+                summary["skipped_noise"] += 1
+                if not dry:
+                    adapter.mark_status(msg, "closed")
+                continue
             if summary["seen"] >= max_messages:
                 print(f"Hit CS_MAX_MESSAGES cap ({max_messages}) — stopping cycle to bound cost.")
                 break

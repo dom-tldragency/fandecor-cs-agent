@@ -30,6 +30,41 @@ def _client():
     return anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 
+# Senders that are never a customer CS message — filtered for free (no LLM call).
+_AUTOMATED_SENDERS = (
+    "noreply", "no-reply", "donotreply", "do-not-reply", "mailer-daemon", "postmaster",
+    "notifications@", "notification@", "bounce", "@shopify.com", "@klaviyo", "@mailchimp",
+    "@intercom", "@stripe.com", "@paypal.", "@google.com", "@facebookmail.com",
+)
+
+
+def is_customer_message(cfg: Config, message: Dict[str, Any]) -> bool:
+    """Cheap relevance gate: is this a real customer CS message worth handling?
+
+    Skips marketing/newsletters, order/shipping NOTIFICATIONS, supplier/B2B and automated mail —
+    so we don't spend triage+draft tokens on noise (esp. in the marketing@ inbox). Obvious automated
+    senders are filtered free; the rest get a tiny Haiku yes/no.
+    """
+    cust = message.get("customer", {}) or {}
+    sender = (cust.get("email") or cust.get("name") or "").lower()
+    if any(p in sender for p in _AUTOMATED_SENDERS):
+        return False
+    system = (
+        "You filter an inbox. Decide if this email is from a CUSTOMER who needs a customer-service "
+        "reply — e.g. a complaint, or a question about an order, delivery, return/refund, or product. "
+        "These are NOT customer CS and should be rejected: marketing newsletters/promotions, automated "
+        "order or shipping NOTIFICATIONS, supplier/B2B/partnership emails, internal mail, and system "
+        "notifications. Reply with one word only: yes or no."
+    )
+    user = (f"From: {sender}\nSubject: {message.get('subject','')}\n"
+            f"Body: {(message.get('body') or '')[:300]}")
+    resp = _client().messages.create(
+        model=TRIAGE_MODEL, max_tokens=5, system=system,
+        messages=[{"role": "user", "content": user}],
+    )
+    return "yes" in resp.content[0].text.strip().lower()
+
+
 def triage(cfg: Config, message: Dict[str, Any]) -> Dict[str, Any]:
     """Classify a message. Returns {category, order_hint, sentiment, urgency, summary}."""
     system = (
