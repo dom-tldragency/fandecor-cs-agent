@@ -81,6 +81,30 @@ class GmailChannel(ChannelAdapter):
             userId="me", body={"raw": raw, "threadId": msg["raw"]["threadId"]}
         ).execute()
 
+    def fetch_recent(self, max_threads: int = 15) -> List[Message]:
+        """Recent Primary inbox threads (read OR unread) — used for the demo preview, NOT the live loop."""
+        if not self.live:
+            return []
+        svc = self._service()
+        threads = svc.users().threads().list(
+            userId="me", q="in:inbox category:primary newer_than:30d", maxResults=max_threads,
+        ).execute().get("threads", [])
+        out: List[Message] = []
+        for t in threads:
+            full = svc.users().threads().get(userId="me", id=t["id"], format="full").execute()
+            msgs = full.get("messages", [])
+            if not msgs:
+                continue
+            first = msgs[0]  # the thread opener — usually the customer's original message
+            headers = {h["name"]: h["value"] for h in first.get("payload", {}).get("headers", [])}
+            out.append(Message(
+                id=t["id"], channel=self.name, received_at=first.get("internalDate"),
+                customer={"name": headers.get("From", ""), "email": _addr(headers.get("From", ""))},
+                subject=headers.get("Subject", ""), body=_extract_body(first.get("payload", {})),
+                order_hint="", attachments=[], raw={"threadId": t["id"]},
+            ))
+        return out
+
     def send_email(self, to: str, subject: str, body: str) -> Dict[str, Any]:
         """Send a fresh email (no thread) — used for refund-confirmation loop closure."""
         svc = self._service()

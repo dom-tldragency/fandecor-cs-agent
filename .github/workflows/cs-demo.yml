@@ -1,0 +1,27 @@
+name: Fan Decor CS Demo Draft
+
+# Manual-only. Posts a DRAFT PREVIEW of what the agent would reply to a recent customer email
+# into #fan-decor-cs-agent. Reads + drafts only — never sends to a customer, never touches money.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r runtime/requirements.txt
+      - name: Post a demo draft preview to Slack
+        env:
+          # safe: runtime/demo.py only reads Gmail, drafts text, and posts an internal Slack preview.
+          DRY_RUN:                  "false"
+          ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
+          SHOPIFY_ADMIN_TOKEN:      ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_STORE:            fan-decor-1.myshopify.com
+          SLACK_WEBHOOK_URL:        ${{ secrets.SLACK_WEBHOOK_URL }}
+          GMAIL_SERVICE_ACCOUNT_JSON: ${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}
+        run: python -m runtime.demo
