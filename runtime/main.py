@@ -7,6 +7,7 @@ Guardrails are enforced here in code AFTER the LLM, never trusted to the model.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -146,11 +147,15 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
     summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0,
                "closed": 0, "errors": 0, "stubbed": []}
 
+    max_messages = int(os.environ.get("CS_MAX_MESSAGES", "15"))   # bound per-cycle cost
     for adapter in build_adapters(cfg):
         if not adapter.live:
             summary["stubbed"].append(adapter.name)
             continue
         for msg in adapter.fetch_new():
+            if summary["seen"] >= max_messages:
+                print(f"Hit CS_MAX_MESSAGES cap ({max_messages}) — stopping cycle to bound cost.")
+                break
             summary["seen"] += 1
             try:
                 res = handle_message(cfg, adapter, shop, slack, cu, msg, dry)

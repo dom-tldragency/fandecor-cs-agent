@@ -52,8 +52,12 @@ class GmailChannel(ChannelAdapter):
         if not self.live:
             return []
         svc = self._service()
+        # category:primary skips Promotions/Updates/Social/Forums — i.e. newsletters and
+        # notifications that aren't customer CS. Keeps cost + noise down (esp. on marketing@).
+        max_threads = int(os.environ.get("CS_MAX_THREADS_PER_MAILBOX", "12"))
         threads = svc.users().threads().list(
-            userId="me", q="is:unread in:inbox newer_than:7d", maxResults=25
+            userId="me", q="is:unread in:inbox category:primary newer_than:7d",
+            maxResults=max_threads,
         ).execute().get("threads", [])
         out: List[Message] = []
         for t in threads:
