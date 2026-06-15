@@ -52,11 +52,14 @@ class GmailChannel(ChannelAdapter):
         if not self.live:
             return []
         svc = self._service()
-        # category:primary skips Promotions/Updates/Social/Forums — i.e. newsletters and
-        # notifications that aren't customer CS. Keeps cost + noise down (esp. on marketing@).
-        max_threads = int(os.environ.get("CS_MAX_THREADS_PER_MAILBOX", "12"))
+        # Exclude only the bulk-noise categories (Promotions/Social/Forums = newsletters etc.).
+        # Keep Primary AND Updates — Gmail files order-related customer emails (e.g. "ORDER NO #1322")
+        # under Updates, so filtering to Primary alone wrongly dropped real customers. The relevance
+        # gate (llm.is_customer_message) then drops actual order NOTIFICATIONS vs. customer queries.
+        max_threads = int(os.environ.get("CS_MAX_THREADS_PER_MAILBOX", "20"))
         threads = svc.users().threads().list(
-            userId="me", q="is:unread in:inbox category:primary newer_than:7d",
+            userId="me",
+            q="is:unread in:inbox -category:promotions -category:social -category:forums newer_than:7d",
             maxResults=max_threads,
         ).execute().get("threads", [])
         out: List[Message] = []
@@ -87,7 +90,9 @@ class GmailChannel(ChannelAdapter):
             return []
         svc = self._service()
         threads = svc.users().threads().list(
-            userId="me", q="in:inbox category:primary newer_than:30d", maxResults=max_threads,
+            userId="me",
+            q="in:inbox -category:promotions -category:social -category:forums newer_than:30d",
+            maxResults=max_threads,
         ).execute().get("threads", [])
         out: List[Message] = []
         for t in threads:

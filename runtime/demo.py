@@ -32,7 +32,7 @@ def run_demo() -> None:
         if not gmail.live:
             print(f"{mb}: Gmail not configured.")
             continue
-        for m in gmail.fetch_recent(max_threads=15):
+        for m in gmail.fetch_recent(max_threads=25):
             try:
                 if llm.is_customer_message(cfg, m):
                     chosen, chosen_mailbox = m, mb
