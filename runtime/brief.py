@@ -50,6 +50,9 @@ def build_and_post() -> Dict[str, Any]:
     list_id = os.environ.get("CLICKUP_LIST_ID", "901615395458")
     since = int((time.time() - 24 * 3600) * 1000)
     tasks = _recent_tasks(list_id, since)
+    if not tasks:
+        # Quiet day — one-liner, not a full report.
+        return Slack().post("☀️ *Frankie* — all quiet overnight, nothing new to report. Nothing needs you 👍")
     tallies = _tally(tasks)
     act, cat = tallies["action"], tallies["category"]
 
@@ -57,7 +60,7 @@ def build_and_post() -> Dict[str, Any]:
     escal = act.get("escalated", 0)
     auto = act.get("auto_sent", 0)
     text = (
-        f"☀️ *Fan Decor CS — Daily Brief*\n"
+        f"☀️ *Frankie — Daily Brief*\n"
         f"📥 Volume (24h): *{len(tasks)}* handled\n"
         f"   by category: " + (" · ".join(f"{k} {v}" for k, v in cat.most_common()) or "—") + "\n"
         f"✅ Auto-resolved: {auto}   ✍️ Awaiting approval: {awaiting}   🚨 Escalations: {escal}\n"
