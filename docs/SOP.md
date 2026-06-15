@@ -35,6 +35,14 @@ Models: **Haiku** triages, **Sonnet** drafts. Cheap and fast.
 - **Escalations:** an angry customer / legal threat / chargeback gets pinged immediately — a human takes over.
 - **Returns — the physical step:** when a returned parcel arrives, someone marks the ClickUp task
   "Received & inspected." Only then does the refund/replacement proceed (the agent can't verify a physical parcel).
+- **Closing the loop (you drive the agent from ClickUp):** when you've actioned something the agent
+  didn't finish itself — raised a Tarlu replacement, sorted an escalation, want to send goodwill — drop
+  a comment on the task:
+  - `REPLY: your replacement's on its way, tracking ABC123` → the agent sends that to the customer on
+    the original email/DM thread and **closes the task**.
+  - `CLOSE` → the agent just closes the task (no message).
+  Refunds you don't even need to do this for — the agent spots the Shopify refund, confirms to the
+  customer and closes automatically.
 - Everything else, the agent handles and just reports in the daily brief.
 
 ## 4. Cadence (deliberately light)
