@@ -10,6 +10,11 @@
 #   full_phase3     = also auto-process refunds/returns under the cap.
 mode: send_non_money
 
+# Loop closure: when a human processes a refund in Shopify, the agent always confirms + closes the
+# ClickUp task and posts a Slack confirmation. If this is true, it ALSO emails the customer a
+# "you've been refunded" confirmation. Default false (turn on once you trust the drafts).
+auto_confirm_refunds: false
+
 # HARD, MODE-INDEPENDENT RULES (never overridden by mode):
 hard_rules:
   - "Money actions (refund / payment / store credit) are ALWAYS gated below full_phase3, and any amount above refund_cap_gbp is NEVER auto, in any mode."

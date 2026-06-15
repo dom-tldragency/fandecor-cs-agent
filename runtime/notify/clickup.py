@@ -56,3 +56,41 @@ class ClickUp:
         )
         r.raise_for_status()
         return r.json()
+
+    # ----- reconciliation helpers (loop closure) -------------------------
+    def _headers(self) -> Dict[str, str]:
+        return {"Authorization": self.token, "Content-Type": "application/json"}
+
+    def list_open_tasks(self, list_id: str) -> List[Dict[str, Any]]:
+        """Open (not closed) tasks in a list. Empty if no token."""
+        if not self.token:
+            return []
+        r = requests.get(f"{API}/list/{list_id}/task",
+                         headers=self._headers(), params={"include_closed": "false"}, timeout=15)
+        r.raise_for_status()
+        return r.json().get("tasks", [])
+
+    def comment_task(self, task_id: str, text: str) -> None:
+        if self.dry_run or not self.token:
+            print(f"[DRY_RUN clickup] comment on {task_id}: {text}")
+            return
+        requests.post(f"{API}/task/{task_id}/comment",
+                      headers=self._headers(), json={"comment_text": text}, timeout=15)
+
+    def _done_status(self, list_id: str) -> Optional[str]:
+        """Find the list's 'done'/'closed' status name."""
+        r = requests.get(f"{API}/list/{list_id}", headers=self._headers(), timeout=15)
+        r.raise_for_status()
+        for s in r.json().get("statuses", []):
+            if s.get("type") in ("done", "closed"):
+                return s.get("status")
+        return None
+
+    def close_task(self, task_id: str, list_id: str) -> None:
+        if self.dry_run or not self.token:
+            print(f"[DRY_RUN clickup] close task {task_id}")
+            return
+        status = self._done_status(list_id)
+        if status:
+            requests.put(f"{API}/task/{task_id}",
+                         headers=self._headers(), json={"status": status}, timeout=15)

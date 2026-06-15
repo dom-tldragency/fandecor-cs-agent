@@ -133,6 +133,16 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
         return {"skipped": "out_of_hours"}
 
     shop, slack, cu = Shopify(), Slack(), ClickUp()
+
+    # Loop closure: confirm + close any refunds a human has since processed in Shopify.
+    try:
+        from .reconcile import reconcile_refunds
+        n = reconcile_refunds(cfg, shop, slack, cu, dry)
+        if n:
+            print(f"Loop-closure: confirmed + closed {n} processed refund(s).")
+    except Exception as e:
+        print(f"  ! reconcile error: {e}")
+
     summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0,
                "closed": 0, "errors": 0, "stubbed": []}
 

@@ -53,6 +53,10 @@ class Config:
         return self.autonomy.get("mode", "draft_only")
 
     @property
+    def auto_confirm_refunds(self) -> bool:
+        return bool(self.autonomy.get("auto_confirm_refunds", False))
+
+    @property
     def refund_cap_gbp(self) -> Optional[float]:
         g = self.brand.get("guardrails", {}).get("refund_cap_gbp", {})
         return g.get("value") if g.get("confirmed") else None

@@ -77,6 +77,12 @@ class GmailChannel(ChannelAdapter):
             userId="me", body={"raw": raw, "threadId": msg["raw"]["threadId"]}
         ).execute()
 
+    def send_email(self, to: str, subject: str, body: str) -> Dict[str, Any]:
+        """Send a fresh email (no thread) — used for refund-confirmation loop closure."""
+        svc = self._service()
+        raw = _build_raw(to=to, frm=self.mailbox, subject=subject, body=body)
+        return svc.users().messages().send(userId="me", body={"raw": raw}).execute()
+
     def save_draft(self, msg: Message, body: str) -> Dict[str, Any]:
         svc = self._service()
         raw = _build_raw(to=msg["customer"]["email"], frm=self.mailbox,

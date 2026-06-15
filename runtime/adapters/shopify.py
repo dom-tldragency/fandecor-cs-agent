@@ -43,6 +43,7 @@ class Shopify:
             edges { node {
               name email createdAt displayFulfillmentStatus displayFinancialStatus
               totalPriceSet { shopMoney { amount currencyCode } }
+              totalRefundedSet { shopMoney { amount } }
               customer { firstName lastName }
               lineItems(first: 10) { edges { node { title quantity sku } } }
               fulfillments(first: 5) {
@@ -66,6 +67,7 @@ class Shopify:
         if fulfil and fulfil[0].get("trackingInfo"):
             tracking = (fulfil[0]["trackingInfo"] or [{}])[0]
         money = node.get("totalPriceSet", {}).get("shopMoney", {})
+        refunded = (node.get("totalRefundedSet") or {}).get("shopMoney", {})
         return {
             "order_number": node.get("name"),
             "email": node.get("email"),
@@ -74,6 +76,7 @@ class Shopify:
             "financial_status": node.get("displayFinancialStatus"),
             "fulfillment_status": node.get("displayFulfillmentStatus"),
             "total": money.get("amount"),
+            "total_refunded": refunded.get("amount") or "0.00",
             "currency": money.get("currencyCode"),
             "line_items": [e["node"] for e in node.get("lineItems", {}).get("edges", [])],
             "tracking_company": tracking.get("company"),
