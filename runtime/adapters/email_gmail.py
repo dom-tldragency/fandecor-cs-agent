@@ -125,6 +125,24 @@ class GmailChannel(ChannelAdapter):
         raw = _build_raw(to=to, frm=self.mailbox, subject=subject, body=body)
         return svc.users().messages().send(userId="me", body={"raw": raw}).execute()
 
+    def reply_to_thread(self, thread_id: str, body: str) -> Dict[str, Any]:
+        """Reply into an existing thread given only its id — used when a human (via ClickUp)
+        tells the agent to send a message to the customer. Raises if the thread isn't in this mailbox."""
+        svc = self._service()
+        full = svc.users().threads().get(userId="me", id=thread_id, format="full").execute()
+        to, subject = None, ""
+        for m in full.get("messages", []):
+            h = {hh["name"]: hh["value"] for hh in m.get("payload", {}).get("headers", [])}
+            frm = h.get("From", "")
+            if "fandecor.com" not in frm.lower():     # the customer's address
+                to, subject = _addr(frm), h.get("Subject", "")
+        if not to:
+            raise RuntimeError("no customer address found in thread")
+        raw = _build_raw(to=to, frm=self.mailbox, subject="Re: " + subject, body=body)
+        return svc.users().messages().send(
+            userId="me", body={"raw": raw, "threadId": thread_id}
+        ).execute()
+
     def save_draft(self, msg: Message, body: str) -> Dict[str, Any]:
         svc = self._service()
         raw = _build_raw(to=msg["customer"]["email"], frm=self.mailbox,

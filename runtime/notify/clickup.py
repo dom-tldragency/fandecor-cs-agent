@@ -95,6 +95,14 @@ class ClickUp:
         r.raise_for_status()
         return r.json().get("tasks", [])
 
+    def get_task_comments(self, task_id: str) -> List[Dict[str, Any]]:
+        """Comments on a task (for reading team instructions like REPLY:/CLOSE)."""
+        if not self.token:
+            return []
+        r = requests.get(f"{API}/task/{task_id}/comment", headers=self._headers(), timeout=15)
+        r.raise_for_status()
+        return r.json().get("comments", [])
+
     def comment_task(self, task_id: str, text: str) -> None:
         if self.dry_run or not self.token:
             print(f"[DRY_RUN clickup] comment on {task_id}: {text}")

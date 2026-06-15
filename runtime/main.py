@@ -152,6 +152,15 @@ def run_cycle(brand: str = "fandecor", force: bool = False) -> Dict[str, Any]:
     except Exception as e:
         print(f"  ! reconcile error: {e}")
 
+    # Team control: action REPLY:/CLOSE instructions Camilla/Jamie left on ClickUp tasks.
+    try:
+        from .control import process_team_instructions
+        c = process_team_instructions(cfg, cu, dry)
+        if c:
+            print(f"Team control: actioned {c} instruction(s) from ClickUp.")
+    except Exception as e:
+        print(f"  ! control error: {e}")
+
     summary = {"seen": 0, "auto_sent": 0, "drafted": 0, "escalated": 0,
                "closed": 0, "errors": 0, "skipped_noise": 0, "stubbed": []}
 
