@@ -20,25 +20,29 @@ from . import llm
 
 def run_demo() -> None:
     cfg = Config("fandecor")
-    gmail = GmailChannel("customerservice@fandecor.com")
     slack = Slack()
-    if not gmail.live:
-        print("Gmail not configured — set GMAIL_SERVICE_ACCOUNT_JSON.")
-        return
-
     shop = Shopify()
-    candidates = gmail.fetch_recent(max_threads=15)
 
+    # Try marketing@ first (where the real customer volume is), then customerservice@.
+    mailboxes = ["marketing@fandecor.com", "customerservice@fandecor.com"]
     chosen = None
-    for m in candidates:
-        try:
-            if llm.is_customer_message(cfg, m):
-                chosen = m
-                break
-        except Exception as e:
-            print(f"relevance check error: {e}")
+    chosen_mailbox = None
+    for mb in mailboxes:
+        gmail = GmailChannel(mb)
+        if not gmail.live:
+            print(f"{mb}: Gmail not configured.")
+            continue
+        for m in gmail.fetch_recent(max_threads=15):
+            try:
+                if llm.is_customer_message(cfg, m):
+                    chosen, chosen_mailbox = m, mb
+                    break
+            except Exception as e:
+                print(f"relevance check error: {e}")
+        if chosen:
+            break
     if not chosen:
-        slack.post("🧪 *Demo:* couldn't find a recent customer email in customerservice@ to draft from.")
+        slack.post("🧪 *Demo:* couldn't find a recent customer email in marketing@ or customerservice@ to draft from.")
         return
 
     t = llm.triage(cfg, chosen)
@@ -49,6 +53,7 @@ def run_demo() -> None:
     order_line = f" · order {order.get('order_number')}" if order else " · no order matched"
     preview = (
         "🧪 *DRAFT PREVIEW — demo only, nothing sent*\n"
+        f"*Inbox:* {chosen_mailbox}\n"
         f"*Customer:* {chosen['customer'].get('name')}\n"
         f"*Subject:* {chosen.get('subject') or '(none)'}\n"
         f"*Their message:*\n> {((chosen.get('body') or '').strip()[:280] or '(empty)')}\n\n"
