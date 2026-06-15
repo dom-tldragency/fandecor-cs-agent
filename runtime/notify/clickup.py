@@ -24,15 +24,39 @@ class ClickUp:
     def log_action(self, *, category: str, order: str, channel: str, action: str,
                    detail: str = "", returns: bool = False,
                    assignees: Optional[List[str]] = None,
-                   due_in_hours: Optional[float] = None) -> Dict[str, Any]:
-        """Create an audit task for a handled message, optionally assigned + due-dated."""
+                   due_in_hours: Optional[float] = None,
+                   convo_key: Optional[str] = None) -> Dict[str, Any]:
+        """One task PER CONVERSATION. If a task already exists for this convo, add a comment
+        (and close it when the action means complete) instead of creating a new task."""
+        list_id = self.returns_list_id if returns else self.list_id
+
+        if convo_key:
+            existing = self.find_open_task_by_convo(list_id, convo_key)
+            if existing:
+                note = f"🔄 *{action}*" + (f" — {detail}" if detail else "")
+                self.comment_task(existing["id"], note)
+                if action in ("auto_sent", "closed"):
+                    self.close_task(existing["id"], list_id)   # conversation complete
+                return existing
+
         name = f"[{channel}] {category} · {order or 'no-order'} · {action}"
+        marker = f"\n\n<!-- convo:{convo_key} -->" if convo_key else ""
         body = (
             f"**Category:** {category}\n**Order:** {order}\n**Channel:** {channel}\n"
-            f"**Action:** {action}\n**Detail:** {detail}\n"
+            f"**Action:** {action}\n**Detail:** {detail}\n{marker}"
         )
-        return self._create_task(self.returns_list_id if returns else self.list_id,
-                                 name, body, assignees, due_in_hours)
+        return self._create_task(list_id, name, body, assignees, due_in_hours)
+
+    def find_open_task_by_convo(self, list_id: str, convo_key: str) -> Optional[Dict[str, Any]]:
+        """Find an OPEN task for this conversation (matched on the embedded convo marker)."""
+        if not (self.token and convo_key):
+            return None
+        needle = f"convo:{convo_key}"
+        for t in self.list_open_tasks(list_id):
+            blob = (t.get("description") or "") + (t.get("text_content") or "") + (t.get("name") or "")
+            if needle in blob:
+                return t
+        return None
 
     def _create_task(self, list_id: str, name: str, markdown: str,
                      assignees: Optional[List[str]] = None,

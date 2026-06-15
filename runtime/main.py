@@ -92,14 +92,16 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
     if action == "close":
         if not dry:
             adapter.mark_status(msg, "closed")
-        cu.log_action(category=category, order=order_no, channel=adapter.name, action="closed")
+        cu.log_action(category=category, order=order_no, channel=adapter.name, action="closed",
+                      convo_key=msg.get("id"))
     elif action == "escalate":
         slack.escalation(f"{category} · {order_no} · \"{t.get('summary','')}\"", approver)
         if not dry:
             adapter.mark_status(msg, "escalated")   # mark handled so it isn't re-processed next cycle
         jamie = [i for i in [cfg.approver.get("clickup_id")] if i]
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="escalated",
-                      detail=t.get("summary", ""), assignees=jamie, due_in_hours=24)
+                      detail=t.get("summary", ""), assignees=jamie, due_in_hours=24,
+                      convo_key=msg.get("id"))
     elif action == "auto_send":
         body = llm.draft_reply(cfg, msg, category, order)
         if dry:
@@ -107,7 +109,8 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         else:
             adapter.send_reply(msg, body)
             adapter.mark_status(msg, "resolved")
-        cu.log_action(category=category, order=order_no, channel=adapter.name, action="auto_sent")
+        cu.log_action(category=category, order=order_no, channel=adapter.name, action="auto_sent",
+                      convo_key=msg.get("id"))
     else:  # draft or gated
         body = llm.draft_reply(cfg, msg, category, order)
         if not dry:
@@ -125,7 +128,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         cu.log_action(category=category, order=order_no, channel=adapter.name,
                       action=f"drafted_{action}", detail=t.get("summary", ""),
                       returns=(category in ("returns_exchange", "damaged_wrong_missing")),
-                      assignees=assignees, due_in_hours=24)
+                      assignees=assignees, due_in_hours=24, convo_key=msg.get("id"))
     return {"category": category, "action": action, "order": order_no}
 
 
