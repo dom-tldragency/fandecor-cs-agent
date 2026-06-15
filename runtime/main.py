@@ -97,7 +97,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
     elif action == "escalate":
         if not dry:
             adapter.mark_status(msg, "escalated")   # mark handled so it isn't re-processed next cycle
-        jamie = [i for i in [cfg.approver.get("clickup_id")] if i]
+        jamie = [cfg.cover_clickup_id] if cfg.cover_clickup_id else [i for i in [cfg.approver.get("clickup_id")] if i]
         res = cu.log_action(category=category, order=order_no, channel=adapter.name, action="escalated",
                             detail=t.get("summary", ""), assignees=jamie, due_in_hours=24,
                             convo_key=msg.get("id"))
@@ -117,14 +117,19 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         if not dry:
             adapter.save_draft(msg, body)
             adapter.mark_status(msg, "pending_approval")   # mark handled so it isn't re-processed
-        # money actions task Camilla + Jamie; other drafts task Camilla (the CS operator)
-        if action == "gated":
+        # Assignees: a 'cover' override (someone covering while the team's off) wins; otherwise
+        # money -> Camilla + Jamie, other drafts -> Camilla.
+        if cfg.cover_clickup_id:
+            assignees = [cfg.cover_clickup_id]
+        elif action == "gated":
             assignees = list(cfg.money_task_assignees)
         else:
             assignees = [cfg.cs_operator.get("clickup_id")]
         assignees = [a for a in assignees if a]
+        # Put the drafted reply in the task so the reviewer can read + send it from ClickUp.
+        detail = f"DRAFT REPLY (review + send):\n{body[:800]}\n\n— triage: {t.get('summary','')}"
         res = cu.log_action(category=category, order=order_no, channel=adapter.name,
-                            action=f"drafted_{action}", detail=t.get("summary", ""),
+                            action=f"drafted_{action}", detail=detail,
                             returns=(category in ("returns_exchange", "damaged_wrong_missing")),
                             assignees=assignees, due_in_hours=24, convo_key=msg.get("id"))
         if res.get("created", True):   # only ping on the first human-touch per conversation

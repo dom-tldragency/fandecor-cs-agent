@@ -73,6 +73,11 @@ class Config:
     def money_task_assignees(self) -> list:
         return self.brand.get("guardrails", {}).get("money_task_assignees_clickup_ids", [])
 
+    @property
+    def cover_clickup_id(self) -> Optional[str]:
+        """If set, ALL CS tasks route to this person (e.g. a colleague covering while others are off)."""
+        return self.brand.get("guardrails", {}).get("cover_clickup_id") or None
+
     def category_action(self, category: str) -> str:
         """Base action for a triage category from autonomy.yaml (auto_send/draft/escalate/gated/close)."""
         cats = self.autonomy.get("categories", {})

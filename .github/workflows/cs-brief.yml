@@ -20,6 +20,7 @@ jobs:
       - run: pip install -r runtime/requirements.txt
       - name: Post daily brief
         env:
+          DRY_RUN:           "false"   # the brief must actually post to Slack
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_BOT_TOKEN:   ${{ secrets.SLACK_BOT_TOKEN }}
           CLICKUP_TOKEN:     ${{ secrets.CLICKUP_TOKEN }}

@@ -8,7 +8,8 @@
 #   send_non_money  = auto-send everything that (a) isn't a money action and
 #                     (b) doesn't quote an unconfirmed policy value. CURRENT.
 #   full_phase3     = also auto-process refunds/returns under the cap.
-mode: send_non_money
+mode: draft_only   # Frankie drafts every reply for a human to review + send; auto-sends NOTHING.
+                   # Switch to send_non_money to let it auto-send the safe categories.
 
 # Loop closure: when a human processes a refund in Shopify, the agent always confirms + closes the
 # ClickUp task and posts a Slack confirmation. If this is true, it ALSO emails the customer a

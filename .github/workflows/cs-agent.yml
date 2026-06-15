@@ -32,7 +32,9 @@ jobs:
       - run: pip install -r runtime/requirements.txt
       - name: Run one CS cycle
         env:
-          DRY_RUN:                  ${{ inputs.dry_run || vars.DRY_RUN || 'true' }}
+          # Scheduled runs operate for real (create drafts/tasks/pings). Safety is the autonomy MODE:
+          # draft_only auto-sends NOTHING to customers. Manual dispatch defaults to dry_run=true.
+          DRY_RUN:                  ${{ inputs.dry_run || vars.DRY_RUN || 'false' }}
           ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
           SHOPIFY_ADMIN_TOKEN:      ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SLACK_WEBHOOK_URL:        ${{ secrets.SLACK_WEBHOOK_URL }}
