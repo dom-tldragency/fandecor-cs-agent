@@ -37,7 +37,7 @@ class ClickUp:
                 self.comment_task(existing["id"], note)
                 if action in ("auto_sent", "closed"):
                     self.close_task(existing["id"], list_id)   # conversation complete
-                return existing
+                return {"task": existing, "created": False}
 
         name = f"[{channel}] {category} · {order or 'no-order'} · {action}"
         marker = f"\n\n<!-- convo:{convo_key} -->" if convo_key else ""
@@ -45,7 +45,8 @@ class ClickUp:
             f"**Category:** {category}\n**Order:** {order}\n**Channel:** {channel}\n"
             f"**Action:** {action}\n**Detail:** {detail}\n{marker}"
         )
-        return self._create_task(list_id, name, body, assignees, due_in_hours)
+        return {"task": self._create_task(list_id, name, body, assignees, due_in_hours),
+                "created": True}
 
     def find_open_task_by_convo(self, list_id: str, convo_key: str) -> Optional[Dict[str, Any]]:
         """Find an OPEN task for this conversation (matched on the embedded convo marker)."""
