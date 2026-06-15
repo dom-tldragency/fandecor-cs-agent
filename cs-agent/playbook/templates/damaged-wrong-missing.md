@@ -8,9 +8,9 @@ and/or a refund. Agent gathers evidence, drafts the empathetic reply, and routes
 ### Customer-facing acknowledgement (drafted; resolution is human-approved)
 > Hi {first_name},
 >
-> Oh no — I'm really sorry your order **{order_number}** arrived {damaged / with the wrong item / incomplete}. That's not the standard we want for you. {if photo needed per confirmed policy: Could you reply with a quick photo of the {item/packaging}? That lets us sort a replacement or refund fast.}
+> Sorry about that — your order **{order_number}** shouldn't have arrived {damaged / with the wrong item / incomplete}. {if photo needed per confirmed policy: Could you reply with a quick photo of the {item/packaging}? That lets us sort a replacement or refund fast.}
 >
-> As soon as I have that I'll get this put right for you straight away.
+> As soon as I have that I'll get it put right for you.
 >
 > {sign_off}
 

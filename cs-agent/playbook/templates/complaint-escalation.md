@@ -20,9 +20,9 @@ Suggested next step: {one line}
 ### Optional de-escalation draft (for a human to review/send — NOT auto-sent)
 > Hi {first_name},
 >
-> I'm really sorry about this — I completely understand the frustration, and I want to make it right. I've flagged your message to {team/owner} personally and we'll come back to you directly and quickly.
+> Apologies for the trouble here. I've passed this straight to {team/owner}, who'll come back to you directly and quickly to put it right.
 >
-> Thank you for your patience while we sort this properly.
+> Thanks for your patience while we sort it.
 >
 > {sign_off}
 
