@@ -48,6 +48,29 @@ class GmailChannel(ChannelAdapter):
         )
         return build("gmail", "v1", credentials=creds, cache_discovery=False)
 
+    def _to_message(self, thread_id: str, msgs: list) -> Message:
+        """Build a normalised Message carrying the FULL thread history (for multi-message context).
+
+        `history` is the whole conversation oldest-first, each tagged from 'customer' or 'us'.
+        `body`/`subject`/`customer` focus on the latest *customer* message — the one we're replying to.
+        """
+        history = []
+        for m in msgs:
+            h = {hh["name"]: hh["value"] for hh in m.get("payload", {}).get("headers", [])}
+            frm = h.get("From", "")
+            who = "us" if "fandecor.com" in frm.lower() else "customer"
+            history.append({"from": who, "sender": frm, "subject": h.get("Subject", ""),
+                            "text": (_extract_body(m.get("payload", {})) or "").strip()})
+        cust_idxs = [i for i, e in enumerate(history) if e["from"] == "customer"]
+        focus_i = cust_idxs[-1] if cust_idxs else len(msgs) - 1
+        focus, fh = msgs[focus_i], history[focus_i]
+        return Message(
+            id=thread_id, channel=self.name, received_at=focus.get("internalDate"),
+            customer={"name": fh["sender"], "email": _addr(fh["sender"])},
+            subject=fh["subject"], body=fh["text"],
+            order_hint="", attachments=[], raw={"threadId": thread_id}, history=history,
+        )
+
     def fetch_new(self) -> List[Message]:
         if not self.live:
             return []
@@ -66,14 +89,8 @@ class GmailChannel(ChannelAdapter):
         for t in threads:
             full = svc.users().threads().get(userId="me", id=t["id"], format="full").execute()
             msgs = full.get("messages", [])
-            last = msgs[-1]
-            headers = {h["name"]: h["value"] for h in last.get("payload", {}).get("headers", [])}
-            out.append(Message(
-                id=t["id"], channel=self.name, received_at=last.get("internalDate"),
-                customer={"name": headers.get("From", ""), "email": _addr(headers.get("From", ""))},
-                subject=headers.get("Subject", ""), body=_extract_body(last.get("payload", {})),
-                order_hint="", attachments=[], raw={"threadId": t["id"]},
-            ))
+            if msgs:
+                out.append(self._to_message(t["id"], msgs))
         return out
 
     def send_reply(self, msg: Message, body: str) -> Dict[str, Any]:
@@ -98,16 +115,8 @@ class GmailChannel(ChannelAdapter):
         for t in threads:
             full = svc.users().threads().get(userId="me", id=t["id"], format="full").execute()
             msgs = full.get("messages", [])
-            if not msgs:
-                continue
-            first = msgs[0]  # the thread opener — usually the customer's original message
-            headers = {h["name"]: h["value"] for h in first.get("payload", {}).get("headers", [])}
-            out.append(Message(
-                id=t["id"], channel=self.name, received_at=first.get("internalDate"),
-                customer={"name": headers.get("From", ""), "email": _addr(headers.get("From", ""))},
-                subject=headers.get("Subject", ""), body=_extract_body(first.get("payload", {})),
-                order_hint="", attachments=[], raw={"threadId": t["id"]},
-            ))
+            if msgs:
+                out.append(self._to_message(t["id"], msgs))
         return out
 
     def send_email(self, to: str, subject: str, body: str) -> Dict[str, Any]:
@@ -125,10 +134,13 @@ class GmailChannel(ChannelAdapter):
         ).execute()
 
     def mark_status(self, msg: Message, status: str) -> None:
+        # Mark the thread READ on ANY handled status (resolved/closed/pending_approval/escalated)
+        # so the next cycle's `is:unread` fetch won't re-process it. A customer reply re-opens it
+        # (unread again) → re-handled with full thread context. The human is alerted via Slack/ClickUp,
+        # not the inbox unread state, so marking read is safe for drafts/escalations too.
         svc = self._service()
-        remove = ["UNREAD"] if status in ("resolved", "closed") else []
         svc.users().threads().modify(
-            userId="me", id=msg["raw"]["threadId"], body={"removeLabelIds": remove}
+            userId="me", id=msg["raw"]["threadId"], body={"removeLabelIds": ["UNREAD"]}
         ).execute()
 
 

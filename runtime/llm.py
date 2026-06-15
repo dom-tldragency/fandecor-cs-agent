@@ -65,6 +65,22 @@ def is_customer_message(cfg: Config, message: Dict[str, Any]) -> bool:
     return "yes" in resp.content[0].text.strip().lower()
 
 
+def _history_block(message: Dict[str, Any]) -> str:
+    """Render the full thread (oldest first, tagged customer vs us) for conversation context."""
+    h = message.get("history") or []
+    if len(h) <= 1:
+        return ""
+    lines = []
+    for e in h:
+        who = "CUSTOMER" if e.get("from") == "customer" else "FAN DECOR (us, earlier)"
+        txt = (e.get("text") or "").strip()[:600]
+        if txt:
+            lines.append(f"{who}: {txt}")
+    if not lines:
+        return ""
+    return "Conversation so far (oldest first):\n" + "\n\n".join(lines) + "\n\n"
+
+
 def triage(cfg: Config, message: Dict[str, Any]) -> Dict[str, Any]:
     """Classify a message. Returns {category, order_hint, sentiment, urgency, summary}."""
     system = (
@@ -75,8 +91,9 @@ def triage(cfg: Config, message: Dict[str, Any]) -> Dict[str, Any]:
     )
     user = (
         f"Channel: {message.get('channel')}\n"
-        f"Subject: {message.get('subject', '')}\n"
-        f"Message: {message.get('body', '')}\n\n"
+        + _history_block(message)
+        + f"Subject: {message.get('subject', '')}\n"
+        f"Latest customer message: {message.get('body', '')}\n\n"
         'Return JSON: {"category": "...", "order_hint": "...", "customer_name": "...", '
         '"sentiment": "positive|neutral|negative|angry", "urgency": "...", "summary": "..."}'
     )
@@ -104,9 +121,11 @@ def draft_reply(cfg: Config, message: Dict[str, Any], category: str,
         f"Template to adapt:\n{template}"
     )
     user = (
-        f"Customer message: {message.get('body','')}\n"
+        _history_block(message)
+        + f"Latest customer message to reply to: {message.get('body','')}\n"
         f"Order data: {json.dumps(order) if order else 'No order found'}\n\n"
-        "Write the reply body only (no subject, no preamble)."
+        "Write the reply body only (no subject, no preamble). If this is an ongoing thread, reply in "
+        "context — acknowledge what's already been said and don't re-ask questions already answered."
     )
     resp = _client().messages.create(
         model=DRAFT_MODEL, max_tokens=600, system=system,

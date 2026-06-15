@@ -95,6 +95,8 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="closed")
     elif action == "escalate":
         slack.escalation(f"{category} · {order_no} · \"{t.get('summary','')}\"", approver)
+        if not dry:
+            adapter.mark_status(msg, "escalated")   # mark handled so it isn't re-processed next cycle
         jamie = [i for i in [cfg.approver.get("clickup_id")] if i]
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="escalated",
                       detail=t.get("summary", ""), assignees=jamie, due_in_hours=24)
@@ -110,6 +112,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         body = llm.draft_reply(cfg, msg, category, order)
         if not dry:
             adapter.save_draft(msg, body)
+            adapter.mark_status(msg, "pending_approval")   # mark handled so it isn't re-processed
         slack.approval_request(
             f"{category} · {order_no} · drafted, needs approval"
             + (" (MONEY)" if action == "gated" else ""), approver)
