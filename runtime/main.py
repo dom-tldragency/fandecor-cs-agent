@@ -94,8 +94,9 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="closed")
     elif action == "escalate":
         slack.escalation(f"{category} · {order_no} · \"{t.get('summary','')}\"", approver)
+        jamie = [i for i in [cfg.approver.get("clickup_id")] if i]
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="escalated",
-                      detail=t.get("summary", ""))
+                      detail=t.get("summary", ""), assignees=jamie)
     elif action == "auto_send":
         body = llm.draft_reply(cfg, msg, category, order)
         if dry:
@@ -111,9 +112,16 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         slack.approval_request(
             f"{category} · {order_no} · drafted, needs approval"
             + (" (MONEY)" if action == "gated" else ""), approver)
+        # money actions task Camilla + Jamie; other drafts task Camilla (the CS operator)
+        if action == "gated":
+            assignees = list(cfg.money_task_assignees)
+        else:
+            assignees = [cfg.cs_operator.get("clickup_id")]
+        assignees = [a for a in assignees if a]
         cu.log_action(category=category, order=order_no, channel=adapter.name,
                       action=f"drafted_{action}", detail=t.get("summary", ""),
-                      returns=(category in ("returns_exchange", "damaged_wrong_missing")))
+                      returns=(category in ("returns_exchange", "damaged_wrong_missing")),
+                      assignees=assignees)
     return {"category": category, "action": action, "order": order_no}
 
 

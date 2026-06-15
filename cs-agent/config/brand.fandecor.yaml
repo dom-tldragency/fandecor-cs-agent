@@ -81,12 +81,19 @@ guardrails:
   refund_cap_gbp:
     confirmed: true
     value: 35    # "for now" — max £ the agent could auto-process at Phase 3. Above £35 is NEVER auto. (Currently all refunds gated anyway — mode=send_non_money.)
-  named_approver:
+  named_approver:                    # signs off money (refunds/returns)
     confirmed: true
     value: "Jamie Sharp (Agency MD)"
     email: jamie@tl-dr.agency
     slack_id: U08LQRCFXG8
     clickup_id: "81771384"
+  cs_operator:                       # actions CS day-to-day (returns, Tarlu replacements)
+    confirmed: true
+    value: "Camilla"
+    email: camilla@tl-dr.agency
+    slack_id: U08LE9UFDPA
+    clickup_id: "74597739"
+  money_task_assignees_clickup_ids: ["74597739", "81771384"]   # Camilla (action) + Jamie (approve)
   large_order_threshold_gbp:
     confirmed: false
     value: "CONFIRM: £ above which an order auto-escalates as 'large'"

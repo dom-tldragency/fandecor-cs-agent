@@ -61,6 +61,14 @@ class Config:
     def approver(self) -> Dict[str, Any]:
         return self.brand.get("guardrails", {}).get("named_approver", {})
 
+    @property
+    def cs_operator(self) -> Dict[str, Any]:
+        return self.brand.get("guardrails", {}).get("cs_operator", {})
+
+    @property
+    def money_task_assignees(self) -> list:
+        return self.brand.get("guardrails", {}).get("money_task_assignees_clickup_ids", [])
+
     def category_action(self, category: str) -> str:
         """Base action for a triage category from autonomy.yaml (auto_send/draft/escalate/gated/close)."""
         cats = self.autonomy.get("categories", {})
