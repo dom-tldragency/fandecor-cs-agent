@@ -96,7 +96,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         slack.escalation(f"{category} · {order_no} · \"{t.get('summary','')}\"", approver)
         jamie = [i for i in [cfg.approver.get("clickup_id")] if i]
         cu.log_action(category=category, order=order_no, channel=adapter.name, action="escalated",
-                      detail=t.get("summary", ""), assignees=jamie)
+                      detail=t.get("summary", ""), assignees=jamie, due_in_hours=24)
     elif action == "auto_send":
         body = llm.draft_reply(cfg, msg, category, order)
         if dry:
@@ -121,7 +121,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         cu.log_action(category=category, order=order_no, channel=adapter.name,
                       action=f"drafted_{action}", detail=t.get("summary", ""),
                       returns=(category in ("returns_exchange", "damaged_wrong_missing")),
-                      assignees=assignees)
+                      assignees=assignees, due_in_hours=24)
     return {"category": category, "action": action, "order": order_no}
 
 
