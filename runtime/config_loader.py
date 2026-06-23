@@ -78,6 +78,11 @@ class Config:
         """If set, ALL CS tasks route to this person (e.g. a colleague covering while others are off)."""
         return self.brand.get("guardrails", {}).get("cover_clickup_id") or None
 
+    @property
+    def cover_slack_id(self) -> Optional[str]:
+        """If set, ALL Slack pings (approval/escalation) go to this person instead of the approver."""
+        return self.brand.get("guardrails", {}).get("cover_slack_id") or None
+
     def category_action(self, category: str) -> str:
         """Base action for a triage category from autonomy.yaml (auto_send/draft/escalate/gated/close)."""
         cats = self.autonomy.get("categories", {})

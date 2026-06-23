@@ -87,7 +87,7 @@ def handle_message(cfg: Config, adapter: ChannelAdapter, shop: Shopify, slack: S
         or shop.lookup_order(t.get("order_hint", ""), msg.get("customer", {}).get("email"))
     action = decide_action(cfg, category)
     order_no = (order or {}).get("order_number", t.get("order_hint", ""))
-    approver = cfg.approver.get("slack_id", "")
+    approver = cfg.cover_slack_id or cfg.approver.get("slack_id", "")   # cover (Camilla) takes precedence
 
     if action == "close":
         if not dry:

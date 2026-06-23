@@ -96,7 +96,8 @@ guardrails:
     slack_id: U08LE9UFDPA
     clickup_id: "74597739"
   money_task_assignees_clickup_ids: ["74597739", "81771384"]   # Camilla (action) + Jamie (approve)
-  cover_clickup_id: "81771384"   # TEMP (w/c 2026-06-16): Camilla + Dom off — route ALL CS tasks to Jamie. Remove/blank when Camilla is back.
+  cover_clickup_id: "74597739"   # Camilla — ALL CS tasks route to her (Dom's instruction: nothing to Jamie).
+  cover_slack_id: U08LE9UFDPA    # Camilla's Slack — approval/escalation pings go to her, not Jamie.
   large_order_threshold_gbp:
     confirmed: false
     value: "CONFIRM: £ above which an order auto-escalates as 'large'"
